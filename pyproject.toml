@@ -1,0 +1,27 @@
+[project]
+name = "ercot-demand-forecast"
+version = "0.1.0"
+description = "ERCOT hourly demand forecasting — naive baseline + LightGBM + Chronos foundation model comparison"
+requires-python = "==3.12.*"
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "psycopg[binary]>=3.2",
+    "python-dotenv>=1.0",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "scikit-learn>=1.4",
+    "holidays>=0.50",
+    "ipykernel>=6.29",
+    "jupyter>=1.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "pytest>=8.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

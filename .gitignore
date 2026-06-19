@@ -1,0 +1,28 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# Local data + heavy intermediate artifacts
+data/raw/
+data/processed/
+data/*.parquet
+data/*.csv
+
+# Model artifacts (Chronos weights download to ~/.cache/huggingface
+# automatically and are NOT tracked here)
+models/
+*.pkl
+*.joblib
+*.safetensors
+*.bin
+
+# Per-run scoreboards (canonical scoreboard.json stays committed)
+results/runs/

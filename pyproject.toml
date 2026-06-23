@@ -15,6 +15,7 @@ dependencies = [
     "ipykernel>=6.29",
     "jupyter>=1.0",
     "lightgbm>=4.6.0",
+    "chronos-forecasting>=2.3.0",
 ]
 
 [dependency-groups]

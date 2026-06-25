@@ -14,6 +14,8 @@ This one *predicts* from it.
 > **Status:** v1 done. A zero-shot foundation model with no feature engineering
 > beat hand-engineered LightGBM on every point-forecast metric.
 
+![ERCOT day-ahead demand — model comparison, Aug 5–12 2024](assets/headline.png)
+
 ---
 
 ## Scoreboard
@@ -62,27 +64,9 @@ no temporal overlap.
 
 ### Models in detail
 
-**persistence-24h**
-```
-ŷ(T) = y(T - 24h)
-80% PI: [ŷ + r_q10, ŷ + r_q90]  where r are val-set residual quantiles
-                                  (also called split conformal prediction)
-```
-
-**LightGBM (`forecasting/features.py`, 23 features):**
-- Lags: 24h, 25h, 48h, 72h, 168h, 192h
-- Rolling stats: 24h mean/std, 168h mean (all lagged ≥ 24h to avoid leakage)
-- Calendar: hour, day-of-week, month, weekend, US holiday — plus sin/cos cyclical encoding
-- Lagged Houston weather: yesterday's tmax, tmin, precipitation, avg wind speed
-- Quantile regression at 9 levels (q=0.1, 0.2, …, 0.9) for prediction intervals
-- Shared hyperparameters via `forecasting/models.py::train_lgbm()`
-
-**Chronos-Bolt-small** (HuggingFace `amazon/chronos-bolt-small`):
-- Context window: 504 hours (21 days)
-- Prediction length: 24 hours
-- Zero-shot — no fine-tuning on ERCOT data
-- Native quantile output at q=0.1…0.9 (Chronos-Bolt's trained range)
-- Inference batched at 128 contexts → 13s for the full test year on CPU
+- **persistence-24h** — `ŷ(T) = y(T-24h)`. PIs from val-set residual quantiles (also called split conformal prediction) — same width every hour.
+- **LightGBM** — 23 engineered features in `forecasting/features.py`: lags (24/25/48/72/168/192h), rolling stats (lagged ≥ 24h to avoid leakage), calendar + US holidays + sin/cos cyclical encoding, lagged Houston weather. Quantile regression at q=0.1…0.9. Shared params via `forecasting/models.py::train_lgbm()`.
+- **Chronos-Bolt-small** ([HuggingFace](https://huggingface.co/amazon/chronos-bolt-small)) — 504-hour demand context only, no exogenous features. Zero-shot, native quantile output at q=0.1…0.9. ~13 s inference for the full 8,784-hour test year on CPU.
 
 ### Evaluation
 
@@ -178,31 +162,15 @@ imports. Tracked in `TODO.md`.
 
 ## Quick start
 
-### Prerequisites
-- macOS or Linux
-- Docker (with the `energy-text2sql` Postgres container running — *or* a Postgres of your own with the same `eia.demand` / `noaa.daily_weather` tables)
-- Python 3.12 + [`uv`](https://docs.astral.sh/uv/)
-- On macOS Apple Silicon: `brew install libomp` (LightGBM needs it)
-
-### Setup
+**Prereqs:** Docker (Postgres from the companion `energy-text2sql` repo — or your own with the same `eia.demand` / `noaa.daily_weather` tables), Python 3.12 + [`uv`](https://docs.astral.sh/uv/), and on Apple Silicon: `brew install libomp` (LightGBM needs it).
 
 ```bash
-# 1. Make sure Postgres is up
-cd ../energy-text2sql && docker compose up -d && cd -
+cd ../energy-text2sql && docker compose up -d && cd -   # Postgres
+cp .env.example .env                                     # config
+uv sync                                                  # Python deps
+uv run jupyter lab                                       # open notebooks
 
-# 2. Configure
-cp .env.example .env
-
-# 3. Install Python deps
-uv sync
-
-# 4. Open the notebooks
-uv run jupyter lab
-```
-
-Or run a single notebook headless:
-
-```bash
+# Or run a single notebook headless:
 uv run jupyter nbconvert --to notebook --execute notebooks/06_comparison.ipynb --inplace
 ```
 
@@ -212,23 +180,16 @@ uv run jupyter nbconvert --to notebook --execute notebooks/06_comparison.ipynb -
 
 ```
 .
-├── notebooks/                # Narrative — one per phase
-│   ├── 01_eda.ipynb
-│   ├── 02_baselines.ipynb
-│   ├── 03_lightgbm.ipynb
-│   ├── 04_chronos.ipynb
-│   ├── 05_calibration.ipynb
-│   └── 06_comparison.ipynb
-├── forecasting/              # Reusable modules
-│   ├── data.py               # load_demand(), load_weather()
-│   ├── backtest.py           # walk-forward split + leakage assertion
-│   ├── features.py           # lags, calendar, cyclical, weather
-│   ├── metrics.py            # MAPE, RMSE, MAE, coverage, pinball
-│   └── models.py             # shared train_lgbm() helper
-├── results/
-│   ├── scoreboard.json       # point-forecast comparison
-│   └── calibration.json      # PI coverage + sharpness
-├── TODO.md                   # v2 ideas + platform notes
+├── notebooks/          # 01_eda → 06_comparison (see Notebooks table above)
+├── forecasting/        # Reusable modules
+│   ├── data.py         # load_demand(), load_weather()
+│   ├── backtest.py     # walk-forward split with leakage assertion
+│   ├── features.py     # lags, calendar, cyclical, weather
+│   ├── metrics.py      # MAPE, RMSE, MAE, coverage, pinball
+│   └── models.py       # shared train_lgbm() helper
+├── results/            # scoreboard.json + calibration.json
+├── assets/             # headline.png
+├── TODO.md             # v2 ideas + platform notes
 ├── pyproject.toml
 └── README.md
 ```

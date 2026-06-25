@@ -19,6 +19,26 @@
       "mape": 0.08887946270541235,
       "rmse": 6247.948011309962,
       "mae": 4777.280510018215
+    },
+    "lightgbm_point": {
+      "mape": 0.044334687327559796,
+      "rmse": 3445.212994776201,
+      "mae": 2415.1248334937354
+    },
+    "lightgbm_q50": {
+      "mape": 0.043356805836405464,
+      "rmse": 3390.726618417624,
+      "mae": 2347.100345111314,
+      "coverage_80pi": 0.6950136612021858
+    },
+    "chronos_bolt_small_zero_shot": {
+      "mape": 0.0433082036419466,
+      "rmse": 3297.998239645028,
+      "mae": 2268.0526160846425,
+      "coverage_80pi": 0.7659380692167578,
+      "context_len": 504,
+      "n_eval_points": 8784,
+      "note": "Chronos-Bolt trained quantiles 0.1-0.9 only; 95% PI not natively supported."
     }
   }
 }

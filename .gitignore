@@ -3,6 +3,7 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+*.nbconvert.ipynb
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
@@ -26,3 +27,8 @@ models/
 
 # Per-run scoreboards (canonical scoreboard.json stays committed)
 results/runs/
+
+# Private notes — never push
+interview-notes.md
+*.private.md
+notes/

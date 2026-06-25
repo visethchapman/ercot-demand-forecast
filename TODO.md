@@ -42,6 +42,36 @@ typically gains 5-15% MAPE. Requires GPU (~$10-15 on Modal/RunPod H100).
 Bolt is 2024's faster variant — often comparable accuracy at much lower
 latency.
 
+## Intentional skips
+
+### NaN handling
+We drop rows with any missing feature or target rather than impute or let
+LightGBM split on NaN natively. ~200 rows out of ~44,000 — doesn't change
+the metrics. Worth revisiting if the dataset grows.
+
+## Platform notes (macOS Apple Silicon)
+
+### LightGBM + PyTorch libomp conflict
+
+Both LightGBM and PyTorch ship their own copy of `libomp` in the Python wheel.
+When both are imported in the same process, the two OpenMP runtimes can
+corrupt each other's state and segfault — `Exit 139` with no Python traceback.
+
+**Symptoms:** `nbconvert` reports `Kernel died while waiting for execute reply`,
+or a Python script exits with code 139.
+
+**Workaround** (applied in notebook 05):
+1. Set env vars **before** importing torch/lightgbm:
+   ```python
+   os.environ.setdefault("OMP_NUM_THREADS", "1")
+   os.environ.setdefault("MKL_NUM_THREADS", "1")
+   os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+   ```
+2. Pass `n_jobs=1` to LightGBM as belt-and-suspenders.
+
+`KMP_DUPLICATE_LIB_OK` does the real fix; the thread settings make it
+deterministic. Cost: <10 seconds extra at this dataset's scale.
+
 ## Scoreboard rigor
 
 - Walk-forward CV instead of single train/val/test split
